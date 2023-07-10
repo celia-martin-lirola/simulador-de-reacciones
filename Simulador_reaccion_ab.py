@@ -35,10 +35,8 @@ def mat_simul_ab(p_ab, p_ba, n_eventos=100, t=100):
 #Definimos una función que cuente el número de apariciones de A y B en cada instante de tiempo
 #Devueve una matriz cuya primera fila es el número de A y la segunda el numero de B
 
-def contar_ab(p_ab, p_ba, n_eventos=100, t=100):
-  mat = mat_simul_ab(p_ab, p_ba, n_eventos, t)
-  print(mat)
-  count = np.zeros((2, t))
+def contar_ab(mat):
+  count = np.zeros((2, len(mat[0])))
   for j in range(len(mat[0])):
     count[0, j] = np.count_nonzero(mat[:,j] == 'A')
     count[1, j] = np.count_nonzero(mat[:,j] == 'B')
@@ -46,16 +44,38 @@ def contar_ab(p_ab, p_ba, n_eventos=100, t=100):
 
 #representamos esta proporción de reactivos y productos en un plot
 
-matriz = contar_ab(0.02 , 0.01, 10000, 200)
+p_ab = 0.02
+p_ba = 0.01
+n_eventos = 10000
+t = 200
 
-print(matriz)
+matriz_ab = mat_simul_ab(p_ab, p_ba, n_eventos, t)
+print(matriz_ab)
+
+matriz_conteo = contar_ab(matriz_ab)
+print(matriz_conteo)
 
 plt.title('Evolucion de especies en el tiempo')
-plt.plot(matriz[0], 'r', label='A')
-plt.plot(matriz[1], 'b', label='B')
+plt.plot(matriz_conteo[0], 'r', label='A')
+plt.plot(matriz_conteo[1], 'b', label='B')
 plt.xlabel('Tiempo')
 plt.ylabel('N')
 plt.legend(loc='best')
-#plt.show()
 
 plt.savefig('evolucion_ab.jpg')
+plt.show()
+
+#para comprobar que la tendencia de la simulacion es correcta, representamos la relacion Nb/Na
+#esta realcion debe quedar en torno a la division de las probabilidades (p_ab/p_ba)
+
+y = matriz_conteo[1]/matriz_conteo[0]
+k = p_ab/p_ba
+
+plt.plot(y, 'b', label = 'Nb/Na')
+plt.axhline(y = k, color = 'r', label = 'p_ab/p_ba')
+plt.title('Tendencia de la simulacion')
+plt.legend(loc = 'best')
+plt.xlabel('Tiempo')
+
+plt.savefig('tendencia_ab')
+plt.show()
