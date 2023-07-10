@@ -37,6 +37,7 @@ def mat_simul_ab(p_ab, p_ba, n_eventos=100, t=100):
 
 def contar_ab(p_ab, p_ba, n_eventos=100, t=100):
   mat = mat_simul_ab(p_ab, p_ba, n_eventos, t)
+  print(mat)
   count = np.zeros((2, t))
   for j in range(len(mat[0])):
     count[0, j] = np.count_nonzero(mat[:,j] == 'A')
@@ -46,6 +47,8 @@ def contar_ab(p_ab, p_ba, n_eventos=100, t=100):
 #representamos esta proporción de reactivos y productos en un plot
 
 matriz = contar_ab(0.02 , 0.01, 10000, 200)
+
+print(matriz)
 
 plt.title('Evolucion de especies en el tiempo')
 plt.plot(matriz[0], 'r', label='A')
