@@ -53,4 +53,6 @@ plt.plot(matriz[1], 'b', label='B')
 plt.xlabel('Tiempo')
 plt.ylabel('N')
 plt.legend(loc='best')
-plt.show()
+#plt.show()
+
+plt.savefig('evolucion_ab.jpg')
