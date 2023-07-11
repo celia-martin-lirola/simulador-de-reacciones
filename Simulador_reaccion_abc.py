@@ -78,7 +78,8 @@ plt.plot(mat[2], 'g', label='C')
 plt.xlabel('Tiempo')
 plt.ylabel('N')
 plt.legend(loc='best')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/evolucion_abc.jpg')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/evolucion_abc.jpg', 
+            dpi=300)
 plt.show()
 
 #Representamos las cantidades de unos estados frente a otros
@@ -97,7 +98,8 @@ ax[0,1].plot(mat[0], mat[2]) #A frente C
 ax[0,1].set_xlabel('Na')
 ax[0,1].set_ylabel('Nc')
 
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/proporcion_abc.jpg')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/proporcion_abc.jpg',
+            dpi=300)
 plt.show()
 
 
