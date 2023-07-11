@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
+
 """
 Created on Tue Jul 11 11:48:03 2023
 
@@ -7,7 +8,6 @@ Created on Tue Jul 11 11:48:03 2023
 
 #Simulando un sistema de transicion entre 3 estados: A, B, C
 #El sistema puede transicionar de cualquier a cualquier estado con una probabilidad que se define en una lista
-#Lista de probabilidades: p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
 
 #Importamos las librerias necesarias
 import matplotlib.pyplot as plt
@@ -15,10 +15,20 @@ import numpy as np
 import random
 
 
-#Definimos una funcion que recoja en una matriz los estados de la simulacion en cada instante de tiempo y repetida un numero n de veces (n_eventos)
-#p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
-def mat_simul(p_lista, n_eventos=100, t=100):
+#Creamos una funcion que recoja en una matriz los estados de la simulacion en cada instante de tiempo y repetida un numero n de veces (n_eventos)
+#Definimos la lista de probabilidades de transicion:
+    #Lista de probabilidades: p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
+#Asignamos un peso probabilistico a cada uno de los estados para modificar su porporcion inicial:
+    #weights=(A, B, C)
+#Añadimos la opcion de elegir el numero semilla para trabajar con la misma matriz
+def mat_simul(p_lista, weights=(1/3, 1/3, 1/3), n_eventos=100, t=100, seed=8462836):
   mat = np.full((n_eventos, t), 'A')
+  estados = ['A', 'B', 'C']
+
+  if seed != 8462836:
+    random.seed(seed)
+  mat[:, 0] = random.choices(estados, weights=weights, k=n_eventos)
+
   for i in range(n_eventos):
     for j in range(1,t):
       x = random.random()
@@ -28,7 +38,7 @@ def mat_simul(p_lista, n_eventos=100, t=100):
           mat[i,j] = 'A'
         elif x <= p_lista[0]:
           mat[i,j] = 'B'
-        else: #(p_lista[0] < x >= (p_lista[0]+p_lista[1])):
+        else:
           mat[i,j] = 'C'
 
       elif mat[i,j-1]=='B':
@@ -36,7 +46,7 @@ def mat_simul(p_lista, n_eventos=100, t=100):
           mat[i,j] = 'B'
         elif x <= p_lista[2]:
           mat[i,j] = 'A'
-        else: #p_lista[2] < x or x >= (p_lista[2]+p_lista[3]):
+        else:
           mat[i,j] = 'C'
 
       elif mat[i,j-1]=='C':
@@ -44,7 +54,7 @@ def mat_simul(p_lista, n_eventos=100, t=100):
           mat[i,j] = 'C'
         elif x <= p_lista[4]:
           mat[i,j] = 'A'
-        else: #p_lista[4] < x >= (p_lista[4]+p_lista[5]):
+        else:
           mat[i,j] = 'B'
 
   return mat
@@ -52,8 +62,8 @@ def mat_simul(p_lista, n_eventos=100, t=100):
 
 #Definimos otra funcion que cuente la cantidad de eventos que se encuentra en cada uno de los estados A, B, C en cada instante de tiempo
 #Devuelve una matriz de tres filas correspondientes a los estados A, B y C respectivamente, siendo las columnas los instantes de tiempo
-def count_abc(p_lista, n_eventos=100, t=100):
-  mat = mat_simul(p_lista, n_eventos, t)
+def count_abc(mat):
+  t = len(mat[0])
   count = np.zeros((3, t))
   for j in range(len(mat[0])):
     count[0, j] = np.count_nonzero(mat[:,j] == 'A')
@@ -64,10 +74,13 @@ def count_abc(p_lista, n_eventos=100, t=100):
 
 #Definimos los parametros de simulacion
 p_lista = [0.0045, 0.0015, 0.006, 0.0015, 0.004, 0.005]
+weights = (60, 10, 30)
 n_eventos = 500
 t = 1500
+seed=8462836
 
-mat = count_abc(p_lista, n_eventos, t)
+mat = mat_simul(p_lista, weights, n_eventos, t, seed)
+mat = count_abc(mat)
 print(mat)
 
 #Representamos la evolucion de la cantidad de cada uno de los estados a lo largo del tiempo de simulacion
