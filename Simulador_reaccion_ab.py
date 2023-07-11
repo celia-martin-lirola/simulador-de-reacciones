@@ -62,11 +62,11 @@ plt.xlabel('Tiempo')
 plt.ylabel('N')
 plt.legend(loc='best')
 
-plt.savefig('evolucion_ab.jpg')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/Plots/evolucion_ab.jpg')
 plt.show()
 
 #para comprobar que la tendencia de la simulacion es correcta, representamos la relacion Nb/Na
-#esta realcion debe quedar en torno a la division de las probabilidades (p_ab/p_ba)
+#esta relacion debe quedar en torno a la division de las probabilidades (p_ab/p_ba)
 
 y = matriz_conteo[1]/matriz_conteo[0]
 k = p_ab/p_ba
@@ -77,5 +77,5 @@ plt.title('Tendencia de la simulacion')
 plt.legend(loc = 'best')
 plt.xlabel('Tiempo')
 
-plt.savefig('tendencia_ab')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/Plots/tendencia_ab.jpg')
 plt.show()
