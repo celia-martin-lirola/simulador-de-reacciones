@@ -13,6 +13,7 @@ Created on Tue Jul 11 11:48:03 2023
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+from scipy.ndimage import gaussian_filter
 
 
 #Creamos una funcion que recoja en una matriz los estados de la simulacion en cada instante de tiempo y repetida un numero n de veces (n_eventos)
@@ -72,16 +73,36 @@ def count_abc(mat):
   return(count)
 
 
+#Calculo de la entropia de Shannon
+#Definimos una funcion que calcule la entropia en cada instante de tiempo, siendo la suma de las entropias de los tres estados
+#Añadimos el parametro sigma que realiza un suavizado gaussiano sobre esta entropia
+def entrop_simul(mat, n_eventos, sigma=3):
+  t = len(mat[0])
+  St = []
+  for i in range(t):
+    S = 0
+    for j in range(len(mat[:,0])):
+      if mat[j,i] != 0:
+        Pi = mat[j,i]/n_eventos
+        S = S - Pi*np.log(Pi)
+    St.append(S)
+
+  St = gaussian_filter(St,sigma=sigma)
+  return St
+
+
 #Definimos los parametros de simulacion
 p_lista = [0.0045, 0.0015, 0.006, 0.0015, 0.004, 0.005]
 weights = (60, 10, 30)
 n_eventos = 500
 t = 1500
 seed=8462836
+sigma=3
 
 mat = mat_simul(p_lista, weights, n_eventos, t, seed)
 mat = count_abc(mat)
-print(mat)
+mat_S = entrop_simul(mat, n_eventos, sigma)
+print(mat_S)
 
 #Representamos la evolucion de la cantidad de cada uno de los estados a lo largo del tiempo de simulacion
 plt.title('Evolucion de especies en el tiempo')
@@ -98,21 +119,24 @@ plt.show()
 #Representamos las cantidades de unos estados frente a otros
 fig, ax = plt.subplots(2,2, sharex = True, sharey = True)
 fig.suptitle('Proporcion de las especies')
-
 ax[0,0].plot(mat[0], mat[1]) #A frente B
 ax[0,0].set_xlabel('Na')
 ax[0,0].set_ylabel('Nb')
-
 ax[1,0].plot(mat[2], mat[1]) #C frente B
 ax[1,0].set_xlabel('Nc')
 ax[1,0].set_ylabel('Nb')
-
 ax[0,1].plot(mat[0], mat[2]) #A frente C
 ax[0,1].set_xlabel('Na')
 ax[0,1].set_ylabel('Nc')
-
 plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/proporcion_abc.jpg',
             dpi=300)
 plt.show()
 
-
+#Representacion de la entropia de Shannon
+plt.plot(mat_S)  #entropia a lo largo del tiempo
+plt.title('Evolucion de entropia')
+plt.xlabel('Tiempo')
+plt.ylabel('S')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_shannon.jpg',
+            dpi=300)
+plt.show()
