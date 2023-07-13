@@ -12,8 +12,8 @@ Created on Tue Jul 11 11:48:03 2023
 #Importamos las librerias necesarias
 import matplotlib.pyplot as plt
 import numpy as np
-import random
 from scipy.ndimage import gaussian_filter
+import matriz_abc
 
 
 #Creamos una funcion que recoja en una matriz los estados de la simulacion en cada instante de tiempo y repetida un numero n de veces (n_eventos)
@@ -22,43 +22,7 @@ from scipy.ndimage import gaussian_filter
 #Asignamos un peso probabilistico a cada uno de los estados para modificar su porporcion inicial:
     #weights=(A, B, C)
 #Añadimos la opcion de elegir el numero semilla para trabajar con la misma matriz
-def mat_simul(p_lista, weights=(1/3, 1/3, 1/3), n_eventos=100, t=100, seed=8462836):
-  mat = np.full((n_eventos, t), 'A')
-  estados = ['A', 'B', 'C']
 
-  if seed != 8462836:
-    random.seed(seed)
-  mat[:, 0] = random.choices(estados, weights=weights, k=n_eventos)
-
-  for i in range(n_eventos):
-    for j in range(1,t):
-      x = random.random()
-
-      if mat[i,j-1]=='A':
-        if x > (p_lista[0]+p_lista[1]):
-          mat[i,j] = 'A'
-        elif x <= p_lista[0]:
-          mat[i,j] = 'B'
-        else:
-          mat[i,j] = 'C'
-
-      elif mat[i,j-1]=='B':
-        if x > (p_lista[2]+p_lista[3]):
-          mat[i,j] = 'B'
-        elif x <= p_lista[2]:
-          mat[i,j] = 'A'
-        else:
-          mat[i,j] = 'C'
-
-      elif mat[i,j-1]=='C':
-        if x > (p_lista[4]+p_lista[5]):
-          mat[i,j] = 'C'
-        elif x <= p_lista[4]:
-          mat[i,j] = 'A'
-        else:
-          mat[i,j] = 'B'
-
-  return mat
 
 
 #Definimos otra funcion que cuente la cantidad de eventos que se encuentra en cada uno de los estados A, B, C en cada instante de tiempo
@@ -99,7 +63,7 @@ t = 1500
 seed=8462836
 sigma=3
 
-mat = mat_simul(p_lista, weights, n_eventos, t, seed)
+mat = matriz_abc.mat_simul(p_lista, weights, n_eventos, t, seed)
 mat = count_abc(mat)
 mat_S = entrop_simul(mat, n_eventos, sigma)
 print(mat_S)
