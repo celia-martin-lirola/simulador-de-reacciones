@@ -87,3 +87,99 @@ def entrop_simul(mat, n_eventos, sigma=3):
 
   St = gaussian_filter(St,sigma=sigma)
   return St
+
+
+#Calculo de la variacion de entropia de Shannon
+#Devuelve una lista con los valores de variacion segun el tiempo
+def var_entrop(mat):
+  delta_St = []
+  for x in range(1, len(mat)):
+    delta_S = mat[x]-mat[x-1]
+    delta_St.append(delta_S)
+  return(delta_St)
+
+
+#Para la divergencia de Kullback-Leibler
+#Calculo de la entropia relativa o divergencia de informacion, propocional a la energia que debe invertir el sistema para lograr cada estado
+#Realizamos un conteo de transiciones de cualquier a cualquier estado, distinguiendo entre cada una y recogiendolo en una matriz
+def contar_trans(mat):
+  t = len(mat[0])
+  mat_trans = np.zeros((6, t-1))
+  for j in range(1, len(mat[0])):
+    for i in range(len(mat[:, 0])):
+      if mat[i, j-1]=='A' and mat[i,j-1]!=mat[i,j]:
+        if mat[i,j]=='B':
+          mat_trans[0,j-1] += 1
+        elif mat[i,j]=='C':
+          mat_trans[2,j-1] += 1
+      elif mat[i, j-1]=='B' and mat[i,j-1]!=mat[i,j]:
+        if mat[i,j]=='A':
+          mat_trans[1,j-1] += 1
+        elif mat[i,j]=='C':
+          mat_trans[4,j-1] += 1
+      elif mat[i, j-1]=='C' and mat[i,j-1]!=mat[i,j]:
+        if mat[i,j]=='A':
+          mat_trans[3,j-1] += 1
+        elif mat[i,j]=='B':
+          mat_trans[5,j-1] += 1
+  return (mat_trans)
+
+
+#Presentamos varias maneras de normalizar estas transiciones:
+    
+#Normalizando el numero de transiciones dividiendo entre el total
+def trans_norm(mat):
+  mat = contar_trans(mat)
+  for i in range(len(mat[0])):
+    tot = np.sum(mat[:,i])
+    for j in range(len(mat[:,0])):
+      if mat[j,i] != 0:
+        mat[j,i] = mat[j,i]/tot
+  return(mat)
+
+#Normalizando por tandas de intervalos de tiempo
+#Se debe especificar el intervalo deseado
+#Se divide entre el total de los intervalos sin solapar
+def trans_norm_interv(mat, intervalo=5):
+  mat = contar_trans(mat)
+  t = len(mat[0])
+  n = t//intervalo
+  mat_norm = np.zeros((6,n))
+  for x in range(n):    #normalizar transiciones
+    tot = np.sum(mat[:,(x*intervalo):((x+1)*intervalo)])
+    if tot != 0:
+      for j in range(len(mat[:,0])):
+        trans_j = sum(mat[j,(x*intervalo):((x+1)*intervalo)])
+        mat_norm[j,x] = trans_j/tot
+  return(mat_norm)
+
+#Normalizando por tandas de intervalos de tiempo solapando
+def trans_norm_interv_sol(mat, intervalo=5):
+  t = len(mat[0])
+  mat = contar_trans(mat)
+  mat_norm = np.zeros((6,t-intervalo+1))
+  for i in range(t-intervalo+1):
+    tot = np.sum(mat[:,i:(i+intervalo)])
+    #print(tot)
+    if tot != 0:
+      for j in range(len(mat[:,0])):
+        trans_j = sum(mat[j,i:(i+intervalo)])
+        #print(trans_j)
+        mat_norm[j,i] = trans_j/tot
+  return(mat_norm)
+
+
+
+#Calculamos la divergencia de Kullback-Leibler
+#Especificando la matriz sobre la que actua la funcion segun el normalizado que se desee
+def entrop_prod(mat, sigma=1):
+  D_t = np.zeros(len(mat[0]))
+  for i in range(len(mat[0])):
+    D = 0
+    for j in range(0, len(mat[:,0]), 2):
+      if mat[j,i]!=0 and mat[j+1,i]!=0:
+        D = D - (mat[j,i] * np.log(mat[j+1,i]/float(mat[j,i])))
+        D = D - (mat[j+1,i] * np.log(mat[j,i]/float(mat[j+1,i])))
+    D_t[i] = D
+  D_t = gaussian_filter(D_t,sigma=sigma)
+  return(D_t)
