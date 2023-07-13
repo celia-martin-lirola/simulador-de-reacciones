@@ -5,55 +5,10 @@ Created on Tue Jul 11 11:48:03 2023
 
 @author: celia
 """
-
-#Simulando un sistema de transicion entre 3 estados: A, B, C
-#El sistema puede transicionar de cualquier a cualquier estado con una probabilidad que se define en una lista
-
-#Importamos las librerias necesarias
+import f_simul
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter
-import matriz_abc
-
-
-#Creamos una funcion que recoja en una matriz los estados de la simulacion en cada instante de tiempo y repetida un numero n de veces (n_eventos)
-#Definimos la lista de probabilidades de transicion:
-    #Lista de probabilidades: p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
-#Asignamos un peso probabilistico a cada uno de los estados para modificar su porporcion inicial:
-    #weights=(A, B, C)
-#Añadimos la opcion de elegir el numero semilla para trabajar con la misma matriz
-
-
-
-#Definimos otra funcion que cuente la cantidad de eventos que se encuentra en cada uno de los estados A, B, C en cada instante de tiempo
-#Devuelve una matriz de tres filas correspondientes a los estados A, B y C respectivamente, siendo las columnas los instantes de tiempo
-def count_abc(mat):
-  t = len(mat[0])
-  count = np.zeros((3, t))
-  for j in range(len(mat[0])):
-    count[0, j] = np.count_nonzero(mat[:,j] == 'A')
-    count[1, j] = np.count_nonzero(mat[:,j] == 'B')
-    count[2, j] = np.count_nonzero(mat[:,j] == 'C')
-  return(count)
-
-
-#Calculo de la entropia de Shannon
-#Definimos una funcion que calcule la entropia en cada instante de tiempo, siendo la suma de las entropias de los tres estados
-#Añadimos el parametro sigma que realiza un suavizado gaussiano sobre esta entropia
-def entrop_simul(mat, n_eventos, sigma=3):
-  t = len(mat[0])
-  St = []
-  for i in range(t):
-    S = 0
-    for j in range(len(mat[:,0])):
-      if mat[j,i] != 0:
-        Pi = mat[j,i]/n_eventos
-        S = S - Pi*np.log(Pi)
-    St.append(S)
-
-  St = gaussian_filter(St,sigma=sigma)
-  return St
-
 
 #Definimos los parametros de simulacion
 p_lista = [0.0045, 0.0015, 0.006, 0.0015, 0.004, 0.005]
@@ -62,11 +17,13 @@ n_eventos = 500
 t = 1500
 seed=8462836
 sigma=3
+n_simulaciones = 20
 
-mat = matriz_abc.mat_simul(p_lista, weights, n_eventos, t, seed)
-mat = count_abc(mat)
-mat_S = entrop_simul(mat, n_eventos, sigma)
-print(mat_S)
+mat = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed)
+print(mat)
+mat = f_simul.count_abc(mat)
+mat_S = f_simul.entrop_simul(mat, n_eventos, sigma)
+mat_St = f_simul.var_entrop(mat_S)
 
 #Representamos la evolucion de la cantidad de cada uno de los estados a lo largo del tiempo de simulacion
 plt.title('Evolucion de especies en el tiempo')
@@ -102,5 +59,57 @@ plt.title('Evolucion de entropia')
 plt.xlabel('Tiempo')
 plt.ylabel('S')
 plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_shannon.jpg',
+            dpi=300)
+plt.show()
+
+#Representacion de la variacion de la entropia de Shannon
+fig, ax = plt.subplots(2,1, sharex = True)
+ax[0].plot(mat_S, label = 'Evolucion de entropia')
+ax[0].legend()
+ax[0].set_ylabel('S')
+ax[1].plot(mat_St, 'r', label = 'Variacion de entropia')
+ax[1].legend()
+ax[1].set_ylabel('dS/dt')
+ax[1].set_xlabel('Tiempo')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_shannon_var.jpg',
+            dpi=300)
+plt.show()
+
+
+#Representacion de varias simulaciones a la vez junto con su media y desviacion estandar
+count_media = np.zeros((3, t))
+count_media_2 = np.zeros((3, t))
+fig, ax = plt.subplots()
+for x in range(n_simulaciones):
+  mat = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed=8462836)
+  count = f_simul.count_abc(mat)
+  for i in range(len(count[:,0])):
+    count[i] = gaussian_filter(count[i],sigma=sigma)
+  plt.plot(count[0],'lightsalmon', linewidth=1)
+  plt.plot(count[1], 'lightblue', linewidth=1)
+  plt.plot(count[2], 'lightgreen', linewidth=1)
+
+  count_media = count_media + count
+  count_media_2 = count_media_2 + count**2
+count_media = count_media/n_simulaciones
+count_media_2 = count_media_2/n_simulaciones
+
+plt.plot(count_media[0], 'r', label='media_Na')
+plt.plot(count_media[1], 'b', label='media_Nb')
+plt.plot(count_media[2], 'g', label='media_Nc')
+
+stdr_dev = np.sqrt(count_media_2 - count_media**2)
+plt.plot(count_media[0] + stdr_dev[0], '--r', linewidth=1)
+plt.plot(count_media[1] + stdr_dev[1], '--b', linewidth=1)
+plt.plot(count_media[2] + stdr_dev[2], '--g', linewidth=1)
+plt.plot(count_media[0] - stdr_dev[0], '--r', linewidth=1)
+plt.plot(count_media[1] - stdr_dev[1], '--b', linewidth=1)
+plt.plot(count_media[2] - stdr_dev[2], '--g', linewidth=1)
+
+ax.legend(loc='best')
+plt.title('Evolucion de especies reactivas')
+plt.xlabel('Tiempo')
+plt.ylabel('Cantidad')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/media_evolucion_abc.jpg',
             dpi=300)
 plt.show()
