@@ -17,7 +17,6 @@ n_eventos = 500
 t = 1500
 seed=8462836
 sigma=3
-n_simulaciones = 20
 
 mat = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed)
 print(mat)
@@ -76,6 +75,9 @@ plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-
 plt.show()
 
 
+#Repetir la simulacion n veces para mostrar promedio
+n_simulaciones = 20
+
 #Representacion de varias simulaciones a la vez junto con su media y desviacion estandar
 count_media = np.zeros((3, t))
 count_media_2 = np.zeros((3, t))
@@ -111,5 +113,139 @@ plt.title('Evolucion de especies reactivas')
 plt.xlabel('Tiempo')
 plt.ylabel('Cantidad')
 plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/media_evolucion_abc.jpg',
+            dpi=300)
+plt.show()
+
+
+#Representacion de la media de entopias de Shannon calculadas
+#Junto con su media y desviacion estandar
+fig, ax = plt.subplots()
+S_media = np.zeros((t))
+S_media_2 = np.zeros((t))
+
+for x in range(n_simulaciones):
+  mat = f_simul.mat_simul(p_lista, weights, n_eventos, t)
+  mat = f_simul.count_abc(mat)
+  mat = f_simul.entrop_simul(mat, n_eventos, sigma)
+  plt.plot(mat, 'lightblue', linewidth=1)
+  S_media = S_media + mat
+  S_media_2 = S_media_2 + mat**2
+
+S_media = S_media/n_simulaciones
+plt.plot(S_media, 'b')
+
+S_media_2 = S_media_2/n_simulaciones
+stdr_dev = np.sqrt(S_media_2 - S_media**2)
+plt.plot(S_media + stdr_dev, '--b', linewidth=1)
+plt.plot(S_media - stdr_dev, '--b', linewidth=1)
+
+plt.title('Evolucion de entropia')
+plt.xlabel('Tiempo')
+plt.ylabel('S')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/media_entropia_shannon.jpg',
+            dpi=300)
+plt.show()
+
+
+#Representacion de la divergencia de Kullback-Leibler
+intervalo = 5
+sigma = 15
+#Se representa el conjunto y la media de n_simulaciones
+#Sin solapamiento
+fig, ax = plt.subplots()
+mat_norm = f_simul.trans_norm_interv(mat)
+mat_Skl = f_simul.entrop_prod(mat_norm, sigma)
+media = np.zeros((len(mat_Skl)))
+media_2 = np.zeros((len(mat_Skl)))
+
+for x in range(n_simulaciones):
+  mat_n = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed=8462836)
+  mat_norm = f_simul.trans_norm_interv(mat_n)
+  mat_Skl = f_simul.entrop_prod(mat_norm, sigma)
+  plt.plot(mat_Skl, 'lightblue', linewidth=1)
+  media = media + mat_Skl
+  media_2 = media_2 + mat_Skl**2
+
+media = media/n_simulaciones
+plt.plot(media, 'b')
+
+media_2 = media_2/n_simulaciones
+stdr_dev = np.sqrt(media_2 - media**2)
+plt.plot(media + stdr_dev, '--b', linewidth=1)
+plt.plot(media - stdr_dev, '--b', linewidth=1)
+
+fig.suptitle('Divergencia de Kullback-Leibler')
+plt.title('Sin solapamiento', fontsize=10)
+plt.xlabel('Tiempo')
+plt.ylabel('dS/dt')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/divergencia_KL.jpg',
+            dpi=300)
+plt.show()
+
+#Se representa el conjunto y la media de n_simulaciones
+#Con solapamiento
+fig, ax = plt.subplots()
+mat_norm = f_simul.trans_norm_interv_sol(mat)
+mat_Skl = f_simul.entrop_prod(mat_norm, sigma)
+media = np.zeros((len(mat_Skl)))
+media_2 = np.zeros((len(mat_Skl)))
+
+for x in range(n_simulaciones):
+  mat_n = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed=8462836)
+  mat_norm = f_simul.trans_norm_interv_sol(mat_n)
+  mat_Skl = f_simul.entrop_prod(mat_norm, sigma)
+  plt.plot(mat_Skl, 'lightblue', linewidth=1)
+  media = media + mat_Skl
+  media_2 = media_2 + mat_Skl**2
+
+media = media/n_simulaciones
+plt.plot(media, 'b')
+
+media_2 = media_2/n_simulaciones
+stdr_dev = np.sqrt(media_2 - media**2)
+plt.plot(media + stdr_dev, '--b', linewidth=1)
+plt.plot(media - stdr_dev, '--b', linewidth=1)
+
+fig.suptitle('Divergencia de Kullback-Leibler')
+plt.title('Sin solapamiento', fontsize=10)
+plt.xlabel('Tiempo')
+plt.ylabel('dS/dt')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/divergencia_KL_solapamiento.jpg',
+            dpi=300)
+plt.show()
+
+
+#Representamos la distribucion de los tiempos de residencia de cada una de las especies
+#Definimos n como el numero de tramos en los que dividimos la simulacion
+n=10
+dic = f_simul.tiempos_residencia_tramos(mat, n)
+fig, ax = plt.subplots()
+estados = ['A', 'B', 'C']
+colores = ['r', 'b', 'g']
+for i in range(len(estados)):
+  S_list = []
+  for j in range(n):
+    f_n = f_simul.mat_frec_tramos(dic, estados[i], j)
+    S = f_simul.calculo_S(f_n)
+    S_list.append(S)
+  plt.plot(S_list, color=colores[i], label=estados[i])
+plt.title('Entropia por tramos')
+plt.xlabel('Tramos tiempo')
+plt.ylabel('S')
+ax.legend(loc='best')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_wt_tramos.jpg',
+            dpi=300)
+plt.show()
+
+#Representación de las distribuciones de los tiempos de residencia en cada tramo
+fig, ax = plt.subplots(n, 1, sharex=True)
+for j in range(n):
+  for i in range(len(estados)):
+    f_n = f_simul.mat_frec_tramos(dic, estados[i], j)
+    ax[j].bar(f_n[1],f_n[0], color=colores[i], label=estados[i], alpha=0.5)
+    ax[j].set_ylabel('N'+str(j))
+fig.suptitle('Grafico de frecuencias')
+ax[n-1].set_xlabel('tiempo de residencia')
+plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/distribucion_wt_tramos.jpg',
             dpi=300)
 plt.show()
