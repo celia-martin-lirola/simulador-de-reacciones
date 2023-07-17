@@ -12,7 +12,7 @@ Created on Wed Jul 12 13:29:35 2023
 import numpy as np
 from scipy.ndimage import gaussian_filter
 import random
-
+import pandas as pd
 
 #Creamos una funcion que recoja en una matriz los estados de la simulacion en cada instante de tiempo y repetida un numero n de veces (n_eventos)
 #Definimos la lista de probabilidades de transicion:
@@ -183,3 +183,76 @@ def entrop_prod(mat, sigma=1):
     D_t[i] = D
   D_t = gaussian_filter(D_t,sigma=sigma)
   return(D_t)
+
+
+#Para observar la distribucion que siguen los tiempos de residencia:
+#Creamos una funcion que guarda los tiempos de residencia en un diccionario
+def tiempos_residencia(mat):
+  t_res = pd.DataFrame(columns=['estado', 'tiempo_residencia', 'frecuencia'])  #tiempos de residencia
+  for j in range(len(mat[:,0])):
+    event = []
+    for i in range(1,len(mat[j])):
+      if mat[j,i-1]==mat[j,i]:
+        event.append(mat[j,i-1])
+      elif mat[j,i-1]!=mat[j,i]:
+        event += mat[j, i-1] + '#'
+    event.append(mat[j, len(mat[0])-1])
+    event = ''.join(event)
+    event = event.split(sep='#')
+    for x in range(len(event)):
+      est = event[x][0]
+      rep = len(event[x])
+      prev = t_res.loc[(t_res.estado == est)&(t_res.tiempo_residencia == rep)]
+      if len(prev) != 0:
+        f = int(prev.frecuencia) + 1
+        t_res.loc[(t_res.estado == est)&(t_res.tiempo_residencia == rep)] = [est, rep, f]
+      else:
+        f = 1
+        t_res_2 = pd.DataFrame({'estado':est, 'tiempo_residencia':[rep], 'frecuencia':[f]})
+        t_res = pd.concat([t_res, t_res_2], ignore_index=True)
+  t_res = t_res.sort_values(['estado', 'tiempo_residencia'])
+  return(t_res)
+
+#Para distinguir entre tramos de tiempo y calcular la entropia de la informacion en cada tramos de tiempo diseñamos la siguiente funcion
+def tiempos_residencia_tramos(mat, k):
+  t_res = pd.DataFrame(columns=['estado', 'tramo_tiempo', 'tiempo_residencia', 'frecuencia'])  #tiempos de residencia
+  n = len(mat[0])//k
+  for j in range(len(mat[:,0])):
+    for k in range(len(mat[0])//n):
+      event = []
+      tramo = 0
+      for i in range(1+k*n, (k+1)*n):
+        if mat[j,i-1]==mat[j,i]:
+          event.append(mat[j,i-1])
+        elif mat[j,i-1]!=mat[j,i]:
+          event += mat[j, i-1] + '#'
+      event.append(mat[j, len(mat[0])-1])
+      event = ''.join(event)
+      event = event.split(sep='#')
+      for x in range(len(event)):
+        est = event[x][0]
+        rep = len(event[x])
+        tramo = k
+        prev = t_res.loc[(t_res.estado == est)&(t_res.tiempo_residencia == rep)&(t_res.tramo_tiempo == k)]
+        if len(prev) != 0:
+          f = int(prev.frecuencia) + 1
+          t_res.loc[(t_res.estado == est)&(t_res.tiempo_residencia == rep)&(t_res.tramo_tiempo == k)] = [est, tramo, rep, f]
+        else:
+          f = 1
+          t_res_2 = pd.DataFrame({'estado':est, 'tramo_tiempo':tramo, 'tiempo_residencia':[rep], 'frecuencia':[f]})
+          t_res = pd.concat([t_res, t_res_2], ignore_index=True)
+  t_res = t_res.sort_values(['estado', 'tramo_tiempo', 'tiempo_residencia'])
+  return(t_res)
+
+#Creamos una funcion que extraiga la informacion de ese diccionario
+def mat_frec_tramos(dic, estado, tramo_tiempo):   #El estado debe aparecer entre comillas y mayuscula
+  dic_n = dic.loc[(dic.estado == estado)&(dic.tramo_tiempo == tramo_tiempo)]
+  f_n = np.array([dic_n.frecuencia, dic_n.tiempo_residencia])
+  return f_n
+
+#Creamos una ultima funcion que calcula la entropia de la informacion extraida
+def calculo_S(f_n):
+  ti_mean = np.sum(f_n[0]*f_n[1])/np.sum(f_n[0])
+  t2i_mean = np.sum(f_n[0]*f_n[1]**2)/np.sum(f_n[0])
+  var_ti = t2i_mean-ti_mean**2
+  return(var_ti/(ti_mean**2))
