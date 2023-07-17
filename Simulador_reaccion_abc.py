@@ -11,7 +11,9 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 #Definimos los parametros de simulacion
+#p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
 p_lista = [0.0045, 0.0015, 0.006, 0.0015, 0.004, 0.005]
+#weights=(A, B, C)
 weights = (60, 10, 30)
 n_eventos = 500
 t = 1500
