@@ -22,6 +22,7 @@ n_eventos = 500
 t = 1500
 seed=8462836
 sigma=3
+sigma_KL = 15
 intervalo = 5 #divergencia de KL
 n=10 #divisiones de la simulacion de tiempos de residencia
 
@@ -40,7 +41,7 @@ carpeta='/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reac
 
 lista_prob = pd.Series(data=p_lista, index=('p_ab', 'p_ac', 'p_ba', 'p_bc', 'p_ca', 'p_cb'))
 lista_pesos = pd.Series(data=weights, index=('peso_A', 'peso_B', 'peso_C'))
-otras_var = pd.Series(data=(n_eventos, t, seed, sigma, intervalo, n), index=('eventos', 'tiempo', 'semilla', 'sigma', 'intervalo_KL', 'tramos_WT'))
+otras_var = pd.Series(data=(n_eventos, t, seed, sigma, sigma_KL, intervalo, n), index=('eventos', 'tiempo', 'semilla', 'sigma', 'sigma_KL', 'intervalo_KL', 'tramos_WT'))
 variables = pd.concat([lista_prob, lista_pesos, otras_var])
 variables.to_excel(carpeta + '/variables.xlsx')
 
@@ -210,7 +211,7 @@ plt.show()
 #Se representa el conjunto y la media de n_simulaciones
 #Con solapamiento
 fig, ax = plt.subplots()
-mat_norm = f_simul.trans_norm_interv_sol(mat)
+mat_norm = f_simul.trans_norm_interv_sol(mat_abc)
 mat_Skl = f_simul.entrop_prod(mat_norm, sigma)
 media = np.zeros((len(mat_Skl)))
 media_2 = np.zeros((len(mat_Skl)))
@@ -270,6 +271,6 @@ for j in range(n):
     ax[j].set_ylabel('N'+str(j))
 fig.suptitle('Grafico de frecuencias')
 ax[n-1].set_xlabel('tiempo de residencia')
-plt.savefig(carpeta + '7distribucion_wt_tramos.jpg',
+plt.savefig(carpeta + '/7distribucion_wt_tramos.jpg',
             dpi=300)
 plt.show()
