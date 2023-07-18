@@ -9,6 +9,9 @@ import f_simul
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter
+import os
+import errno
+import pandas as pd
 
 #Definimos los parametros de simulacion
 #p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
@@ -19,10 +22,32 @@ n_eventos = 500
 t = 1500
 seed=8462836
 sigma=3
+intervalo = 5 #divergencia de KL
+n=10 #divisiones de la simulacion de tiempos de residencia
 
-mat = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed)
-print(mat)
-mat = f_simul.count_abc(mat)
+i=1
+while True:
+    try:
+        os.mkdir('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/simulacion_abc_'+str(i))
+        break
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            i += 1
+        else:
+            raise
+carpeta='/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/simulacion_abc_'+str(i)
+
+
+lista_prob = pd.Series(data=p_lista, index=('p_ab', 'p_ac', 'p_ba', 'p_bc', 'p_ca', 'p_cb'))
+lista_pesos = pd.Series(data=weights, index=('peso_A', 'peso_B', 'peso_C'))
+otras_var = pd.Series(data=(n_eventos, t, seed, sigma, intervalo, n), index=('eventos', 'tiempo', 'semilla', 'sigma', 'intervalo_KL', 'tramos_WT'))
+variables = pd.concat([lista_prob, lista_pesos, otras_var])
+variables.to_excel(carpeta + '/variables.xlsx')
+
+
+mat_abc = f_simul.mat_simul(p_lista, weights, n_eventos, t, seed)
+print(mat_abc)
+mat = f_simul.count_abc(mat_abc)
 mat_S = f_simul.entrop_simul(mat, n_eventos, sigma)
 mat_St = f_simul.var_entrop(mat_S)
 
@@ -34,7 +59,7 @@ plt.plot(mat[2], 'g', label='C')
 plt.xlabel('Tiempo')
 plt.ylabel('N')
 plt.legend(loc='best')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/evolucion_abc.jpg', 
+plt.savefig(carpeta + '/evolucion_abc.jpg', 
             dpi=300)
 plt.show()
 
@@ -50,7 +75,7 @@ ax[1,0].set_ylabel('Nb')
 ax[0,1].plot(mat[0], mat[2]) #A frente C
 ax[0,1].set_xlabel('Na')
 ax[0,1].set_ylabel('Nc')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/proporcion_abc.jpg',
+plt.savefig(carpeta + '/proporcion_abc.jpg',
             dpi=300)
 plt.show()
 
@@ -59,7 +84,7 @@ plt.plot(mat_S)  #entropia a lo largo del tiempo
 plt.title('Evolucion de entropia')
 plt.xlabel('Tiempo')
 plt.ylabel('S')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_shannon.jpg',
+plt.savefig(carpeta + '/entropia_shannon.jpg',
             dpi=300)
 plt.show()
 
@@ -72,7 +97,7 @@ ax[1].plot(mat_St, 'r', label = 'Variacion de entropia')
 ax[1].legend()
 ax[1].set_ylabel('dS/dt')
 ax[1].set_xlabel('Tiempo')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_shannon_var.jpg',
+plt.savefig(carpeta + '/entropia_shannon_var.jpg',
             dpi=300)
 plt.show()
 
@@ -114,7 +139,7 @@ ax.legend(loc='best')
 plt.title('Evolucion de especies reactivas')
 plt.xlabel('Tiempo')
 plt.ylabel('Cantidad')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/media_evolucion_abc.jpg',
+plt.savefig(carpeta + '/media_evolucion_abc.jpg',
             dpi=300)
 plt.show()
 
@@ -144,14 +169,12 @@ plt.plot(S_media - stdr_dev, '--b', linewidth=1)
 plt.title('Evolucion de entropia')
 plt.xlabel('Tiempo')
 plt.ylabel('S')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/media_entropia_shannon.jpg',
+plt.savefig(carpeta + '/media_entropia_shannon.jpg',
             dpi=300)
 plt.show()
 
 
 #Representacion de la divergencia de Kullback-Leibler
-intervalo = 5
-sigma = 15
 #Se representa el conjunto y la media de n_simulaciones
 #Sin solapamiento
 fig, ax = plt.subplots()
@@ -180,7 +203,7 @@ fig.suptitle('Divergencia de Kullback-Leibler')
 plt.title('Sin solapamiento', fontsize=10)
 plt.xlabel('Tiempo')
 plt.ylabel('dS/dt')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/divergencia_KL.jpg',
+plt.savefig(carpeta + '/divergencia_KL.jpg',
             dpi=300)
 plt.show()
 
@@ -212,15 +235,14 @@ fig.suptitle('Divergencia de Kullback-Leibler')
 plt.title('Sin solapamiento', fontsize=10)
 plt.xlabel('Tiempo')
 plt.ylabel('dS/dt')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/divergencia_KL_solapamiento.jpg',
+plt.savefig(carpeta + '/divergencia_KL_solapamiento.jpg',
             dpi=300)
 plt.show()
 
 
 #Representamos la distribucion de los tiempos de residencia de cada una de las especies
 #Definimos n como el numero de tramos en los que dividimos la simulacion
-n=10
-dic = f_simul.tiempos_residencia_tramos(mat, n)
+dic = f_simul.tiempos_residencia_tramos(mat_abc, n)
 fig, ax = plt.subplots()
 estados = ['A', 'B', 'C']
 colores = ['r', 'b', 'g']
@@ -235,7 +257,7 @@ plt.title('Entropia por tramos')
 plt.xlabel('Tramos tiempo')
 plt.ylabel('S')
 ax.legend(loc='best')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/entropia_wt_tramos.jpg',
+plt.savefig(carpeta + '/entropia_wt_tramos.jpg',
             dpi=300)
 plt.show()
 
@@ -248,6 +270,6 @@ for j in range(n):
     ax[j].set_ylabel('N'+str(j))
 fig.suptitle('Grafico de frecuencias')
 ax[n-1].set_xlabel('tiempo de residencia')
-plt.savefig('/Users/celia/OneDrive/Escritorio/BioCompLab/simulador/simulador-de-reacciones/plots_abc/distribucion_wt_tramos.jpg',
+plt.savefig(carpeta + '7distribucion_wt_tramos.jpg',
             dpi=300)
 plt.show()
