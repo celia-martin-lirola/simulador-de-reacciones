@@ -15,7 +15,7 @@ import pandas as pd
 
 #Definimos los parametros de simulacion
 #p_lista = [p_ab, p_ac, p_ba, p_bc, p_ca, p_cb]
-p_lista = [0.0045, 0.0015, 0.006, 0.0015, 0.004, 0.005]
+p_lista = [0.001, 0.02, 0.02, 0.01, 0.01, 0.05]
 #weights=(A, B, C)
 weights = (60, 10, 30)
 n_eventos = 500
@@ -53,12 +53,12 @@ mat_S = f_simul.entrop_simul(mat, n_eventos, sigma)
 mat_St = f_simul.var_entrop(mat_S)
 
 #Representamos la evolucion de la cantidad de cada uno de los estados a lo largo del tiempo de simulacion
-plt.title('Evolucion de especies en el tiempo')
+plt.title('Evolucion de poblaciones en el tiempo')
 plt.plot(mat[0], 'r', label='A')
 plt.plot(mat[1], 'b', label='B')
 plt.plot(mat[2], 'g', label='C')
 plt.xlabel('Tiempo')
-plt.ylabel('N')
+plt.ylabel('N (eventos)')
 plt.legend(loc='best')
 plt.savefig(carpeta + '/evolucion_abc.jpg', 
             dpi=300)
@@ -66,7 +66,7 @@ plt.show()
 
 #Representamos las cantidades de unos estados frente a otros
 fig, ax = plt.subplots(2,2, sharex = True, sharey = True)
-fig.suptitle('Proporcion de las especies')
+fig.suptitle('Proporcion de las poblaciones')
 ax[0,0].plot(mat[0], mat[1]) #A frente B
 ax[0,0].set_xlabel('Na')
 ax[0,0].set_ylabel('Nb')
@@ -82,7 +82,7 @@ plt.show()
 
 #Representacion de la entropia de Shannon
 plt.plot(mat_S)  #entropia a lo largo del tiempo
-plt.title('Evolucion de entropia')
+plt.title('Entropía de Shannon')
 plt.xlabel('Tiempo')
 plt.ylabel('S')
 plt.savefig(carpeta + '/entropia_shannon.jpg',
@@ -91,10 +91,10 @@ plt.show()
 
 #Representacion de la variacion de la entropia de Shannon
 fig, ax = plt.subplots(2,1, sharex = True)
-ax[0].plot(mat_S, label = 'Evolucion de entropia')
+ax[0].plot(mat_S, label = 'Entropía de Shannon')
 ax[0].legend()
 ax[0].set_ylabel('S')
-ax[1].plot(mat_St, 'r', label = 'Variacion de entropia')
+ax[1].plot(mat_St, 'r', label = 'Variacion en el tiempo')
 ax[1].legend()
 ax[1].set_ylabel('dS/dt')
 ax[1].set_xlabel('Tiempo')
@@ -137,9 +137,9 @@ plt.plot(count_media[1] - stdr_dev[1], '--b', linewidth=1)
 plt.plot(count_media[2] - stdr_dev[2], '--g', linewidth=1)
 
 ax.legend(loc='best')
-plt.title('Evolucion de especies reactivas')
+plt.title('Evolucion de poblaciones')
 plt.xlabel('Tiempo')
-plt.ylabel('Cantidad')
+plt.ylabel('N (eventos)')
 plt.savefig(carpeta + '/media_evolucion_abc.jpg',
             dpi=300)
 plt.show()
@@ -179,7 +179,7 @@ plt.show()
 #Se representa el conjunto y la media de n_simulaciones
 #Sin solapamiento
 fig, ax = plt.subplots()
-mat_norm = f_simul.trans_norm_interv(mat)
+mat_norm = f_simul.trans_norm_interv(mat_abc)
 mat_Skl = f_simul.entrop_prod(mat_norm, sigma)
 media = np.zeros((len(mat_Skl)))
 media_2 = np.zeros((len(mat_Skl)))
@@ -233,7 +233,7 @@ plt.plot(media + stdr_dev, '--b', linewidth=1)
 plt.plot(media - stdr_dev, '--b', linewidth=1)
 
 fig.suptitle('Divergencia de Kullback-Leibler')
-plt.title('Sin solapamiento', fontsize=10)
+plt.title('Con solapamiento', fontsize=10)
 plt.xlabel('Tiempo')
 plt.ylabel('dS/dt')
 plt.savefig(carpeta + '/divergencia_KL_solapamiento.jpg',
